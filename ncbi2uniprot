@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+usage()
+{
+cat << EOF
+ncbi2uniprot
+
+Version 1.0 (2018-05-30)
+License: GNU GPLv2
+To report bugs or errors, please contact Daren Card (daren.card@gmail.com).
+This script is provided as-is, with no support and no guarantee of proper or
+desirable functioning.
+
+This script renames the header lines of an NCBI protein FASTA file so that they are
+very similar to the standard UniProt FASTA headers (see https://www.uniprot.org/help/fasta-headers).
+
+This is useful for creating a search database for inferring homology between a gene set
+and the gene annotations for an existing NCBI genome. This standard FASTA header structure
+can be easily parsed and used to relabel GFF and FASTA fields in a new genome annotation, 
+as is normally done as part of the MAKER pipeline. The user must specify the raw protein 
+sequences downloaded from NCBI and the full genus/species name for this organism. Output 
+is written to standard out (STDOUT) following a format that is very similar to UniProt.
+
+This script depends on wget, bioawk, jq, and samtools being installed in the user's \$PATH.
+
+This script automatically retrieves the species list from UniProt. 
+See https://www.uniprot.org/docs/speclist
+
+ncbi2uniprot -p <raw_proteins.faa> -s <"Genus species">
+
+OPTIONS:
+        -h		usage information and help (this message)
+        -p		input protein sequences for NCBI genome annotation
+        -s		full genus and species, surrounded by quotes (")
+EOF
+}
+
+while getopts "hp:s:" OPTION
+do
+	case $OPTION in
+		help)
+			usage
+			exit 1
+			;;
+		p)
+			PROTEINS=$OPTARG
+			;;
+		s)
+			GENSPEC=$OPTARG
+			;;
+		?)
+			usage
+			exit
+			;;
+	esac
+done
+
+if [[ -z ${PROTEINS} ]] || [[ -z ${GENSPEC} ]]
+then
+	usage
+	exit 1
+fi
+
+# retrieve species information
+info=`wget -q -O- https://www.uniprot.org/docs/speclist.txt |
+grep "${GENSPEC}"`
+
+# set numerical and mnemonic species IDs
+idspec=`echo ${info} | awk '{ print $3 }' | sed 's/://g'`
+mnemspec=`echo ${info} | awk '{ print $1 }'`
+
+# query mygene for gene symbols and names and format output
+bioawk -c fastx '{ print $name }' ${PROTEINS} | \
+while read id; \
+do \
+sub=`paste \
+<(echo ${id} | awk -F "." -v OFS="\t" '{ print $1, $2 }') \
+<(wget -qO- "http://mygene.info/v3/query?q=${id}&species=all" | \
+  jq '.hits[0]' | jq '.symbol, .name' | \
+  sed 's/"//g' | paste -s -d "\t") | \
+awk -F "\t" -v fullspec="${GENSPEC}" -v specid="${idspec}" -v mnem="${mnemspec}" \
+  '{ if ($1 ~ "^N") print "ncbi|"$1"|"$3"_"mnem" "$4" OS="fullspec" OX="specid" GN="$3" PE=2 SV="$2; \
+  else if ($1 ~ "^X") print "ncbi|"$1"|"$3"_"mnem" "$4" OS="fullspec" OX="specid" GN="$3" PE=3 SV="$2 }'`; \
+samtools faidx ${PROTEINS} ${id} | \
+bioawk -c fastx -v OFS="\t" -v new="${sub}" \
+  '{ print ">"new; print $seq }'; \
+done
