@@ -5,7 +5,7 @@ usage()
 cat << EOF
 orthorbb
 
-Version 2.1 (2018-05-31)
+Version 2.2 (2020-05-13)
 License: GNU GPLv2
 To report bugs or errors, please contact Daren Card (daren.card@gmail.com).
 This script is provided as-is, with no support and no guarantee of proper or
@@ -43,6 +43,8 @@ EOF
 }
 
 EVAL=0.001
+REVAL=0.001
+OEVAL=0.00001
 THREAD=1
 
 while getopts "hp:a:q:r:e:f:t:" OPTION
