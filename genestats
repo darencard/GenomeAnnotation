@@ -4,7 +4,7 @@ usage()
 {
 cat << EOF
 genestats
-Version 1.0 (10 January, 2018)
+Version 1.1 (2020-06-16)
 License: GNU GPLv2
 To report bugs or errors, please contact Daren Card (daren.card@gmail.com).
 This script is provided as-is, with no support and no guarantee of proper or
@@ -72,18 +72,18 @@ start=`echo $line | awk '{ print $4 }'`; \
 end=`echo $line | awk '{ print $5 }'`; \
 paste <(echo $parent) \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "mRNA") print $0 }' | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print sum }') \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print sum }') \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "exon") print $0 }' | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print count, sum }') \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print count, sum }') \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "mRNA") print $0 }' > mRNA.txt && \
 	tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "exon") print $0 }' > exons.txt && \
 	bedtools subtract -a mRNA.txt -b exons.txt | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print count, sum }' && \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print count, sum }' && \
 	rm mRNA.txt exons.txt) \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "CDS") print $0 }' | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print count, sum }') \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print count, sum }') \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "five_prime_UTR") print $0 }' | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print count, sum }') \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print count, sum }') \
 <(tabix $1.gz $chrom:$start-$end | grep "$parent" | awk '{ if ($3 == "three_prime_UTR") print $0 }' | \
-	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += $5 - $4 } END { print count, sum }'); \
+	awk -v sum=0 -v count=0 -v OFS="\t" '{ count += 1; sum += ($5 - $4 + 1) } END { print count, sum }'); \
 done
