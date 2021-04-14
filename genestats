@@ -60,7 +60,7 @@ fi
 # for the introns, bedtools is used to essentially find the features not matching exons 
 # (i.e. inverse match)
 
-cat $1 | sort -k1,1 -k4,4n -k5,5n | bgzip -c > $1.gz && \
+cat $1 | sort -t $'\t' -k1,1 -k4,4n -k5,5n | bgzip -c > $1.gz && \
 tabix -p gff $1.gz && \
 cat $1 | \
 awk '{ if ($3 == "mRNA") print $0 }' | \
