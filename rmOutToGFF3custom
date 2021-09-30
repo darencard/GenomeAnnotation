@@ -3,7 +3,7 @@ usage()
 {
 cat << EOF
 rmOutToGFF3custom
-Version 1 (2019-10-10)
+Version 1.1 (2021-09-30)
 License: GNU GPLv2
 To report bugs or errors, please contact Daren Card (dcard@uta.edu).
 This script is provided as-is, with no support and no guarantee of proper or
@@ -51,5 +51,5 @@ cat <(echo "##gff-version 3") \
 <(cat ${RMOUT} | tail -n +4 | \
 awk -v OFS="\t" '{ if ($12 ~ /)/) print $5, "RepeatMasker", "dispersed_repeat", $6, $7, $1, $9, ".", "Target="$11"/"$10" "$14" "$13; \
 else print $5, "RepeatMasker", "dispersed_repeat", $6, $7, $1, $9, ".", "Target="$11"/"$10" "$12" "$13 }' | \
-awk -v OFS="\t" '{ if ($7 == "C") print $1, $2, $3, $4, $5, $6, "-", $8, $9; else print $0 }') | \
-sort -k1,1 -k4,4n -k5,5n
+awk -v OFS="\t" '{ if ($7 == "C") print $1, $2, $3, $4, $5, $6, "-", $8, $9; else print $0 }' | \
+sort -k1,1 -k4,4n -k5,5n)
